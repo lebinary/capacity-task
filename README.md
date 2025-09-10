@@ -5,9 +5,9 @@ Capacity is a measure of how much shipping capacity is available on a particular
 # **Dataset**
 
 - You are given a sample dataset which contains sailing-level raw data China-Main ↔︎ North Europe Main trading routes.
-- You will need to be aware of the following :
+- You will need to be aware of the following:
     - To define the week within which the capacity of a given vessel should be assigned, you will need to find the latest point of departure from the origin region (`china_main`) for that particular vessel and service.
-    - One vessel and service combination can be identified based on the following unique identifiers. :
+    - One vessel and service combination can be identified based on the following unique identifiers:
         - `service_version_and_roundtrip_identfiers`
         - `origin_service_version_and_master`
         - `destination_service_version_and_master`
@@ -19,8 +19,8 @@ Capacity is a measure of how much shipping capacity is available on a particular
 
 - You are asked to evaluate offered_capacity data per TEU as a 4-week rolling average for the corridor `china_main - north_europe_main`. This should be done for the period between January 1st to March 31st, 2024.
 - Implement an API endpoint that takes the following parameters:
-- date_from
-- date_to
+  - date_from
+  - date_to
 
 and returns a list with capacity for each week within the given date range.
 
