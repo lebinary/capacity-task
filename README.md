@@ -1,6 +1,6 @@
 # **Understanding Capacity**
 
-Capacity is a measure of how much shipping capacity is available on a particular tradelane. So for example we might say, “on Far East Main to North Europe Main, there was 293k twenty-foot equivalent unit (TEU) of offered capacity on the week of 2025-08-18”. Capacity can be calculated from sailing-level raw data.
+Capacity is a measure of how much shipping capacity is available on a particular tradelane. So for example we might say, “on Far East Main to North Europe Main, there was 293k twenty-foot equivalent unit (TEU) of offered capacity on the week of 2025-08-18”. That 293k TEU is an indication of the number of TEUs offered on this particular corridors based on the vessels that are expected to go from 'Far East Main' to 'North Europe Main' on the week of `2025-08-18`. Capacity can be calculated from sailing-level raw data.
 
 # **Dataset**
 
