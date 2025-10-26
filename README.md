@@ -1,5 +1,12 @@
 # Capacity Task
 
+## Setup
+
+1. Create environment file:
+```bash
+cp .env.example .env
+```
+
 ## Quick Start
 
 ```bash
