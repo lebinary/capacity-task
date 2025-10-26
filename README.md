@@ -3,10 +3,10 @@
 ## Quick Start
 
 ```bash
-docker-compose up --build
+./scripts/run_app.sh
 ```
 
-Initial setup may take up to `10 minutes` depending on internet speed.
+First run automatically builds, migrates, and seeds. Takes up to `10 minutes`.
 
 Access: http://localhost:8001/health
 
@@ -16,18 +16,17 @@ Access: http://localhost:8001/health
 - Redis: 6380
 - FastAPI: 8001
 
+## Testing
+
+```bash
+./scripts/run_tests.sh
+```
+
 ## Common Commands
 
 ```bash
+./scripts/run_app.sh --build
 docker-compose logs -f backend
 docker-compose exec backend alembic revision --autogenerate -m "msg"
 docker-compose down -v
-```
-
-## Local Development
-
-```bash
-pip install -r requirements.txt
-alembic upgrade head
-python backend_app/main.py
 ```
