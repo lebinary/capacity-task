@@ -12,16 +12,18 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 # Import Base from database module
 from backend_app.src.database import Base
+from backend_app.src import models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
 # Set sqlalchemy.url from environment variable
-config.set_main_option(
-    "sqlalchemy.url",
-    os.getenv("DATABASE_URL", "postgresql://capacity_user:capacity_pass@localhost:5433/capacity_db")
-)
+database_url = os.getenv("DATABASE_URL")
+if not database_url:
+    raise ValueError("DATABASE_URL environment variable is not set")
+
+config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

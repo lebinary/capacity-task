@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from backend_app.src.database import get_db
-import redis
+import redis.asyncio as redis
 import os
 import logging
 
@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/health")
-async def health_check(db: Session = Depends(get_db)):
+async def health_check(db: AsyncSession = Depends(get_db)):
     health_status = {
         "status": "healthy",
         "database": "disconnected",
@@ -21,7 +21,7 @@ async def health_check(db: Session = Depends(get_db)):
     }
 
     try:
-        db.execute(text("SELECT 1"))
+        await db.execute(text("SELECT 1"))
         health_status["database"] = "connected"
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
@@ -31,12 +31,13 @@ async def health_check(db: Session = Depends(get_db)):
     try:
         redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
         r = redis.from_url(redis_url)
-        r.ping()
+        await r.ping()
         health_status["redis"] = "connected"
 
-        last_etl = r.get("last_etl_run")
+        last_etl = await r.get("last_etl_run")
         if last_etl:
             health_status["last_etl_run"] = last_etl.decode('utf-8')
+        await r.close()
     except Exception as e:
         logger.error(f"Redis health check failed: {e}")
         health_status["redis"] = "error"

@@ -1,11 +1,40 @@
 #!/bin/bash
-set -euxo pipefail
+set -e
 
-if [ -z "${DATABASE_URL:-}" ]; then
-    echo "DATABASE_URL is not set. Please check your .env file."
-    exit 1
+trap 'echo "Shutting down..."; docker-compose down; exit 0' INT TERM
+
+BUILD_FLAG=false
+
+for arg in "$@"; do
+    if [ "$arg" == "--build" ]; then
+        BUILD_FLAG=true
+    fi
+done
+
+if docker images | grep -q "capacity_backend"; then
+    FIRST_RUN=false
+else
+    FIRST_RUN=true
+    echo "First run detected, will build and seed..."
 fi
 
-alembic upgrade head
+if [ "$BUILD_FLAG" = true ] || [ "$FIRST_RUN" = true ]; then
+    echo "Building from scratch..."
+    docker-compose down -v
+    docker-compose up --build -d
 
-python backend_app/main.py
+    echo "Waiting for services to be healthy..."
+    sleep 5
+
+    echo "Running migrations..."
+    docker-compose exec backend alembic upgrade head
+
+    echo "Seeding database..."
+    docker-compose exec backend python etl/seed.py
+
+    echo "Build complete. Showing logs..."
+    docker-compose logs -f backend
+else
+    echo "Starting services..."
+    docker-compose up
+fi

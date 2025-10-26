@@ -10,8 +10,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
-RUN chmod +x scripts/run_app.sh
-
 EXPOSE 8000
 
-CMD ["/bin/bash", "scripts/run_app.sh"]
+CMD ["python", "backend_app/main.py"]
