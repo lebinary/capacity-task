@@ -11,14 +11,6 @@ if not TEST_DATABASE_URL:
     raise ValueError("TEST_DATABASE_URL environment variable is not set")
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    import asyncio
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest_asyncio.fixture(scope="function")
 async def test_engine():
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
