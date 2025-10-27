@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# Load environment variables
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
+
 trap 'echo "Shutting down..."; docker-compose down; exit 0' INT TERM
 
 BUILD_FLAG=false
@@ -23,8 +28,10 @@ if [ "$BUILD_FLAG" = true ] || [ "$FIRST_RUN" = true ]; then
     docker-compose down -v
     docker-compose up --build -d
 
-    echo "Waiting for services to be healthy..."
-    sleep 5
+    until docker-compose exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" > /dev/null 2>&1; do
+        echo "Waiting for database to be ready..."
+        sleep 5
+    done
 
     echo "Running migrations..."
     docker-compose exec backend alembic upgrade head
