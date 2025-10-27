@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime
 from backend_app.src.services.voyage_service import VoyageService
-from backend_app.src.models import Voyage, Trip
+from backend_app.src.models import VoyageModel, TripModel
 from sqlalchemy import select
 
 
@@ -19,10 +19,10 @@ async def test_create_new_voyage_and_trip(test_db_session, make_trip_data, make_
     assert trip.voyage_id == voyage.id
     assert voyage.capacity_teu == 24136
 
-    result = await test_db_session.execute(select(Voyage))
+    result = await test_db_session.execute(select(VoyageModel))
     assert len(result.scalars().all()) == 1
 
-    result = await test_db_session.execute(select(Trip))
+    result = await test_db_session.execute(select(TripModel))
     assert len(result.scalars().all()) == 1
 
 
@@ -47,10 +47,10 @@ async def test_upsert_voyage_with_newer_departure(test_db_session, make_trip_dat
     assert voyage.latest_origin_departure == dt2
     assert voyage.capacity_teu == 30000
 
-    result = await test_db_session.execute(select(Voyage))
+    result = await test_db_session.execute(select(VoyageModel))
     assert len(result.scalars().all()) == 1
 
-    result = await test_db_session.execute(select(Trip))
+    result = await test_db_session.execute(select(TripModel))
     assert len(result.scalars().all()) == 2
 
 
@@ -75,12 +75,12 @@ async def test_upsert_voyage_with_older_departure(test_db_session, make_trip_dat
     assert voyage.latest_origin_departure == dt1
     assert voyage.capacity_teu == 30000
 
-    result = await test_db_session.execute(select(Voyage))
+    result = await test_db_session.execute(select(VoyageModel))
     voyages = result.scalars().all()
     assert len(voyages) == 1
     assert voyages[0].latest_origin_departure == dt1
 
-    result = await test_db_session.execute(select(Trip))
+    result = await test_db_session.execute(select(TripModel))
     assert len(result.scalars().all()) == 2
 
 
@@ -107,10 +107,10 @@ async def test_different_voyages_same_service_different_masters(test_db_session,
 
     await service.add_trip(trip2, voyage2)
 
-    result = await test_db_session.execute(select(Voyage))
+    result = await test_db_session.execute(select(VoyageModel))
     assert len(result.scalars().all()) == 2
 
-    result = await test_db_session.execute(select(Trip))
+    result = await test_db_session.execute(select(TripModel))
     assert len(result.scalars().all()) == 2
 
 

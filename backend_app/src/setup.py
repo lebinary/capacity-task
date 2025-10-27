@@ -31,11 +31,11 @@ def app_init() -> FastAPI:
         logger.warning("routes.py does not have init_app function")
 
     @app.on_event("startup")
-    async def startup_event():
+    async def startup_event() -> None:
         logger.info("Capacity API started successfully")
 
     @app.on_event("shutdown")
-    async def shutdown_event():
+    async def shutdown_event() -> None:
         logger.info("Capacity API shutting down")
 
     return app

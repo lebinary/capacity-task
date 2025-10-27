@@ -4,7 +4,8 @@ from typing import List, Optional
 from sqlalchemy import and_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend_app.src.models import Voyage
+from backend_app.src.models import VoyageModel
+from backend_app.src.schemas import CapacityRow, VoyageSchemaCreate, VoyageSchemaUpdate
 
 
 class VoyageRepository:
@@ -21,26 +22,28 @@ class VoyageRepository:
         service_version_roundtrip: str,
         origin_service_master: str,
         dest_service_master: str,
-    ) -> Optional[Voyage]:
-        stmt = select(Voyage).where(
+    ) -> Optional[VoyageModel]:
+        stmt = select(VoyageModel).where(
             and_(
-                Voyage.service_version_roundtrip == service_version_roundtrip,
-                Voyage.origin_service_master == origin_service_master,
-                Voyage.dest_service_master == dest_service_master,
+                VoyageModel.service_version_roundtrip == service_version_roundtrip,
+                VoyageModel.origin_service_master == origin_service_master,
+                VoyageModel.dest_service_master == dest_service_master,
             )
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
-    async def create(self, voyage_data: dict) -> Voyage:
-        voyage = Voyage(**voyage_data)
+    async def create(self, voyage_data: VoyageSchemaCreate) -> VoyageModel:
+        voyage = VoyageModel(**voyage_data.model_dump())
         self.db.add(voyage)
         await self.db.flush()
         return voyage
 
-    async def update(self, voyage: Voyage, voyage_data: dict) -> Voyage:
-        for key, value in voyage_data.items():
-            setattr(voyage, key, value)
+    async def update(self, voyage: VoyageModel, voyage_data: VoyageSchemaUpdate) -> VoyageModel:
+        voyage.latest_origin_departure = voyage_data.latest_origin_departure
+        voyage.week_start_date = voyage_data.week_start_date
+        voyage.week_no = voyage_data.week_no
+        voyage.capacity_teu = voyage_data.capacity_teu
         await self.db.flush()
         return voyage
 
@@ -87,7 +90,7 @@ class VoyageRepository:
                     week_start_date,
                     week_no,
                     SUM(capacity_teu) as total_capacity_teu
-                FROM {Voyage.__tablename__}
+                FROM {VoyageModel.__tablename__}
                 WHERE corridor = :corridor
                 GROUP BY week_start_date, week_no
             ),
@@ -125,12 +128,27 @@ class VoyageRepository:
 
     async def get_rolling_average_capacity(
         self, date_from: datetime, date_to: datetime, corridor: str, n_weeks: int
-    ) -> List[tuple]:
+    ) -> List[CapacityRow]:
         rows = await self._get_capacity_from_materialized_view(
             date_from, date_to, corridor, n_weeks
         )
 
         if rows:
-            return rows
+            return [
+                CapacityRow(
+                    week_start_date=row.week_start_date,
+                    week_no=row.week_no,
+                    offered_capacity_teu=row.offered_capacity_teu,
+                )
+                for row in rows
+            ]
 
-        return await self._get_capacity_from_cte(date_from, date_to, corridor, n_weeks)
+        rows = await self._get_capacity_from_cte(date_from, date_to, corridor, n_weeks)
+        return [
+            CapacityRow(
+                week_start_date=row.week_start_date,
+                week_no=row.week_no,
+                offered_capacity_teu=row.offered_capacity_teu,
+            )
+            for row in rows
+        ]

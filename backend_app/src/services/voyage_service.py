@@ -5,7 +5,14 @@ from typing import Dict, List
 import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend_app.src.models import TripModel, VoyageModel
 from backend_app.src.repositories import TripRepository, VoyageRepository
+from backend_app.src.schemas import (
+    TripSchemaCreate,
+    VoyageSchemaCreate,
+    VoyageSchemaUpdate,
+    WeekInfo,
+)
 
 
 class VoyageService:
@@ -14,21 +21,30 @@ class VoyageService:
         self.voyage_repo = VoyageRepository(db)
         self.trip_repo = TripRepository(db)
 
-    async def add_trip(self, trip_data: dict, voyage_data: dict) -> tuple:
+    async def add_trip(
+        self, trip_data: TripSchemaCreate, voyage_data: VoyageSchemaCreate
+    ) -> tuple[TripModel, VoyageModel]:
         voyage = await self.voyage_repo.find_by_composite_key(
-            service_version_roundtrip=voyage_data["service_version_roundtrip"],
-            origin_service_master=voyage_data["origin_service_master"],
-            dest_service_master=voyage_data["dest_service_master"],
+            service_version_roundtrip=voyage_data.service_version_roundtrip,
+            origin_service_master=voyage_data.origin_service_master,
+            dest_service_master=voyage_data.dest_service_master,
         )
 
         if voyage:
-            if voyage_data["latest_origin_departure"] > voyage.latest_origin_departure:
-                voyage = await self.voyage_repo.update(voyage, voyage_data)
+            if voyage_data.latest_origin_departure > voyage.latest_origin_departure:
+                update_data = VoyageSchemaUpdate(
+                    latest_origin_departure=voyage_data.latest_origin_departure,
+                    week_start_date=voyage_data.week_start_date,
+                    week_no=voyage_data.week_no,
+                    capacity_teu=voyage_data.capacity_teu,
+                )
+                voyage = await self.voyage_repo.update(voyage, update_data)
         else:
             voyage = await self.voyage_repo.create(voyage_data)
 
-        trip_data["voyage_id"] = voyage.id
-        trip = await self.trip_repo.create(trip_data)
+        trip_data_dict = trip_data.model_dump()
+        trip_data_dict["voyage_id"] = voyage.id
+        trip = await self.trip_repo.create(trip_data_dict)
 
         await self.db.commit()
         return trip, voyage
@@ -68,8 +84,8 @@ class VoyageService:
         return data
 
     @staticmethod
-    def calculate_week_info(origin_at_utc: datetime) -> dict:
+    def calculate_week_info(origin_at_utc: datetime) -> WeekInfo:
         week_start = origin_at_utc - timedelta(days=origin_at_utc.weekday())
         week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
         week_no = week_start.isocalendar()[1]
-        return {"week_start_date": week_start, "week_no": week_no}
+        return WeekInfo(week_start_date=week_start, week_no=week_no)

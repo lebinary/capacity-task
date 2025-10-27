@@ -1,4 +1,4 @@
-from backend_app.src.models.voyage_model import Voyage
-from backend_app.src.models.trip_model import Trip
+from backend_app.src.models.voyage_model import VoyageModel
+from backend_app.src.models.trip_model import TripModel
 
-__all__ = ["Voyage", "Trip"]
+__all__ = ["VoyageModel", "TripModel"]

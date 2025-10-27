@@ -1,8 +1,10 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
-import redis.asyncio as redis
-import os
 import logging
+import os
+from typing import AsyncGenerator
+
+import redis.asyncio as redis
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ AsyncSessionLocal = async_sessionmaker(
 Base = declarative_base()
 
 
-async def get_db():
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as db:
         try:
             yield db
@@ -43,7 +45,7 @@ async def get_db():
             await db.close()
 
 
-async def get_redis() -> redis.Redis:
+async def get_redis() -> AsyncGenerator[redis.Redis, None]:
     redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
     client = redis.from_url(redis_url, decode_responses=True)
     try:
@@ -53,7 +55,7 @@ async def get_redis() -> redis.Redis:
         await client.close()
 
 
-async def init_db():
+async def init_db() -> None:
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database initialized")

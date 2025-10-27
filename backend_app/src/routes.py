@@ -1,20 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
-from backend_app.src.database import get_db, get_redis
-from backend_app.src.services.voyage_service import VoyageService
-from datetime import datetime
-import redis.asyncio as redis
-import os
 import logging
+import os
+from datetime import datetime
+from typing import Any, Dict, List
+
+import redis.asyncio as redis
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend_app.src.database import get_db, get_redis
+from backend_app.src.schemas import HealthResponse
+from backend_app.src.services.voyage_service import VoyageService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-@router.get("/health")
-async def health_check(db: AsyncSession = Depends(get_db)):
+@router.get("/health", response_model=HealthResponse)
+async def health_check(db: AsyncSession = Depends(get_db)) -> HealthResponse:
     health_status = {
         "status": "healthy",
         "database": "disconnected",
@@ -44,7 +48,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         logger.error(f"Redis health check failed: {e}")
         health_status["redis"] = "error"
 
-    return health_status
+    return HealthResponse(**health_status)
 
 
 @router.get("/capacity")
@@ -54,8 +58,8 @@ async def get_capacity(
     corridor: str = Query("china_main-north_europe_main", description="Shipping corridor"),
     n_weeks: int = Query(4, description="Rolling average window size"),
     db: AsyncSession = Depends(get_db),
-    redis: redis.Redis = Depends(get_redis)
-):
+    redis: redis.Redis = Depends(get_redis),
+) -> List[Dict[str, Any]]:
     try:
         date_from_dt = datetime.strptime(date_from, "%Y-%m-%d")
         date_to_dt = datetime.strptime(date_to, "%Y-%m-%d")
@@ -77,6 +81,6 @@ async def get_capacity(
     return results
 
 
-def init_app(app):
+def init_app(app: FastAPI) -> None:
     app.include_router(router)
     logger.info("Health check route registered at /health")

@@ -160,7 +160,7 @@ Identify entities which will be used to for storage and access patterns
 
 ### 5. ETL Process
 
-- **Trigger**: Manual execution of `python etl/run_etl.py`
+- **Trigger**: Manual execution of `python etl/seed.py`
 - **Frequency**: On-demand (when new CSV data is available)
 - **Steps**:
   1. Extract: Read CSV from S3/filesystem

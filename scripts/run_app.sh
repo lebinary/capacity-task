@@ -30,7 +30,7 @@ if [ "$BUILD_FLAG" = true ] || [ "$FIRST_RUN" = true ]; then
     docker-compose exec backend alembic upgrade head
 
     echo "Seeding database..."
-    docker-compose exec backend python etl/seed.py
+    docker-compose exec backend python backend_app/etl/seed.py
 
     echo "Build complete. Showing logs..."
     docker-compose logs -f backend

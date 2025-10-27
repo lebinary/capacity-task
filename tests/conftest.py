@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from backend_app.src.database import Base
 from backend_app.src.services.voyage_service import VoyageService
+from backend_app.src.schemas import TripSchemaCreate, VoyageSchemaCreate
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 if not TEST_DATABASE_URL:
@@ -54,14 +55,14 @@ def make_trip_data():
     def _make(
         origin_at_utc=None, capacity=24136, origin_port="CNYTN", dest_port="DEHAM"
     ):
-        return {
-            "origin": "china_main",
-            "destination": "north_europe_main",
-            "origin_port_code": origin_port,
-            "destination_port_code": dest_port,
-            "origin_at_utc": origin_at_utc or datetime(2024, 4, 18, 22, 0, 0),
-            "offered_capacity_teu": capacity,
-        }
+        return TripSchemaCreate(
+            origin="china_main",
+            destination="north_europe_main",
+            origin_port_code=origin_port,
+            destination_port_code=dest_port,
+            origin_at_utc=origin_at_utc or datetime(2024, 4, 18, 22, 0, 0),
+            offered_capacity_teu=capacity,
+        )
 
     return _make
 
@@ -77,16 +78,16 @@ def make_voyage_data():
         dt = origin_at_utc or datetime(2024, 4, 18, 22, 0, 0)
         week_info = VoyageService.calculate_week_info(dt)
 
-        return {
-            "service_version_roundtrip": service_roundtrip,
-            "origin_service_master": service_master,
-            "dest_service_master": service_master,
-            "corridor": "china_main-north_europe_main",
-            "latest_origin_departure": dt,
-            "week_start_date": week_info["week_start_date"],
-            "week_no": week_info["week_no"],
-            "capacity_teu": capacity,
-        }
+        return VoyageSchemaCreate(
+            service_version_roundtrip=service_roundtrip,
+            origin_service_master=service_master,
+            dest_service_master=service_master,
+            corridor="china_main-north_europe_main",
+            latest_origin_departure=dt,
+            week_start_date=week_info.week_start_date,
+            week_no=week_info.week_no,
+            capacity_teu=capacity,
+        )
 
     return _make
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from backend_app.src.database import Base
 
 
-class Trip(Base):
+class TripModel(Base):
     __tablename__ = "trips"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -15,4 +15,4 @@ class Trip(Base):
     origin_at_utc = Column(DateTime, nullable=False)
     offered_capacity_teu = Column(Integer, nullable=False)
 
-    voyage = relationship("Voyage", back_populates="trips")
+    voyage = relationship("VoyageModel", back_populates="trips")

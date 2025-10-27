@@ -1,23 +1,23 @@
 import asyncio
 import csv
+import logging
 import os
 import sys
 from datetime import datetime
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-import logging
+from typing import Dict, Tuple
 
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend_app.src.database import AsyncSessionLocal
+from backend_app.src.schemas import TripSchemaCreate, VoyageSchemaCreate
 from backend_app.src.services.voyage_service import VoyageService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def parse_csv_row(row: dict) -> tuple[dict, dict]:
+def parse_csv_row(row: Dict[str, str]) -> Tuple[TripSchemaCreate, VoyageSchemaCreate]:
     origin_at_utc = datetime.strptime(row["ORIGIN_AT_UTC"], "%Y-%m-%d %H:%M:%S.%f")
 
     service_version_roundtrip = row["SERVICE_VERSION_AND_ROUNDTRIP_IDENTFIERS"]
@@ -29,30 +29,30 @@ def parse_csv_row(row: dict) -> tuple[dict, dict]:
 
     week_info = VoyageService.calculate_week_info(origin_at_utc)
 
-    trip_data = {
-        "origin": row["ORIGIN"],
-        "destination": row["DESTINATION"],
-        "origin_port_code": row["ORIGIN_PORT_CODE"],
-        "destination_port_code": row["DESTINATION_PORT_CODE"],
-        "origin_at_utc": origin_at_utc,
-        "offered_capacity_teu": capacity_teu,
-    }
+    trip_data = TripSchemaCreate(
+        origin=row["ORIGIN"],
+        destination=row["DESTINATION"],
+        origin_port_code=row["ORIGIN_PORT_CODE"],
+        destination_port_code=row["DESTINATION_PORT_CODE"],
+        origin_at_utc=origin_at_utc,
+        offered_capacity_teu=capacity_teu,
+    )
 
-    voyage_data = {
-        "service_version_roundtrip": service_version_roundtrip,
-        "origin_service_master": origin_service_master,
-        "dest_service_master": dest_service_master,
-        "corridor": corridor,
-        "latest_origin_departure": origin_at_utc,
-        "week_start_date": week_info["week_start_date"],
-        "week_no": week_info["week_no"],
-        "capacity_teu": capacity_teu,
-    }
+    voyage_data = VoyageSchemaCreate(
+        service_version_roundtrip=service_version_roundtrip,
+        origin_service_master=origin_service_master,
+        dest_service_master=dest_service_master,
+        corridor=corridor,
+        latest_origin_departure=origin_at_utc,
+        week_start_date=week_info.week_start_date,
+        week_no=week_info.week_no,
+        capacity_teu=capacity_teu,
+    )
 
     return trip_data, voyage_data
 
 
-async def refresh_materialized_view(db):
+async def refresh_materialized_view(db: AsyncSession) -> None:
     try:
         await db.execute(
             text("REFRESH MATERIALIZED VIEW CONCURRENTLY weekly_capacity_rolling")
@@ -63,7 +63,7 @@ async def refresh_materialized_view(db):
         logger.warning(f"View refresh failed (may not exist yet): {e}")
 
 
-async def seed_database(csv_path: str):
+async def seed_database(csv_path: str) -> None:
     async with AsyncSessionLocal() as db:
         service = VoyageService(db)
 
@@ -88,7 +88,6 @@ async def seed_database(csv_path: str):
 
                 logger.info(f"Seeding complete. Total rows processed: {total_rows}")
 
-                # Refresh materialized view after data load
                 await refresh_materialized_view(db)
 
         except Exception as e:
@@ -99,7 +98,9 @@ async def seed_database(csv_path: str):
 
 if __name__ == "__main__":
     csv_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ),
         "raw_data",
         "sailing_level_raw.csv",
     )

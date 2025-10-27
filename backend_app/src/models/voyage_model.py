@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from backend_app.src.database import Base
 
 
-class Voyage(Base):
+class VoyageModel(Base):
     __tablename__ = "voyages"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -16,7 +16,7 @@ class Voyage(Base):
     week_no = Column(Integer, nullable=False)
     capacity_teu = Column(Integer, nullable=False)
 
-    trips = relationship("Trip", back_populates="voyage")
+    trips = relationship("TripModel", back_populates="voyage")
 
     __table_args__ = (
         UniqueConstraint(
