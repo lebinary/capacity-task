@@ -8,6 +8,11 @@ from backend_app.src.models import Voyage
 
 
 class VoyageRepository:
+    MATERIALIZED_VIEW_COLUMNS = {
+        4: "offered_capacity_teu_4week",
+        8: "offered_capacity_teu_8week",
+    }
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
@@ -39,16 +44,50 @@ class VoyageRepository:
         await self.db.flush()
         return voyage
 
-    async def get_rolling_average_capacity(
+    async def _get_capacity_from_materialized_view(
         self, date_from: datetime, date_to: datetime, corridor: str, n_weeks: int
     ) -> List[tuple]:
-        query = text("""
+        if n_weeks not in self.MATERIALIZED_VIEW_COLUMNS:
+            return []
+
+        column = self.MATERIALIZED_VIEW_COLUMNS[n_weeks]
+
+        query = text(f"""
+            SELECT
+                week_start_date,
+                week_no,
+                {column} as offered_capacity_teu
+            FROM weekly_capacity_rolling
+            WHERE corridor = :corridor
+              AND week_start_date >= :date_from
+              AND week_start_date <= :date_to
+            ORDER BY week_start_date
+        """)
+
+        try:
+            result = await self.db.execute(
+                query,
+                {
+                    "corridor": corridor,
+                    "date_from": date_from,
+                    "date_to": date_to,
+                },
+            )
+            return result.fetchall()
+        except Exception:
+            await self.db.rollback()
+            return []
+
+    async def _get_capacity_from_cte(
+        self, date_from: datetime, date_to: datetime, corridor: str, n_weeks: int
+    ) -> List[tuple]:
+        query = text(f"""
             WITH weekly_capacity AS (
                 SELECT
                     week_start_date,
                     week_no,
                     SUM(capacity_teu) as total_capacity_teu
-                FROM voyages
+                FROM {Voyage.__tablename__}
                 WHERE corridor = :corridor
                 GROUP BY week_start_date, week_no
             ),
@@ -83,3 +122,15 @@ class VoyageRepository:
         )
 
         return result.fetchall()
+
+    async def get_rolling_average_capacity(
+        self, date_from: datetime, date_to: datetime, corridor: str, n_weeks: int
+    ) -> List[tuple]:
+        rows = await self._get_capacity_from_materialized_view(
+            date_from, date_to, corridor, n_weeks
+        )
+
+        if rows:
+            return rows
+
+        return await self._get_capacity_from_cte(date_from, date_to, corridor, n_weeks)

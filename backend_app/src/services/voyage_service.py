@@ -5,8 +5,7 @@ from typing import Dict, List
 import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend_app.src.repositories.trip_repository import TripRepository
-from backend_app.src.repositories.voyage_repository import VoyageRepository
+from backend_app.src.repositories import TripRepository, VoyageRepository
 
 
 class VoyageService:

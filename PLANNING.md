@@ -110,7 +110,8 @@ Identify entities which will be used to for storage and access patterns
 - **weekly_capacity_rolling** (Materialized View)
    - Purpose: Pre-computed weekly totals with common rolling averages (4-week, 8-week)
    - Key columns: corridor, week_start_date, week_no, total_capacity_teu, offered_capacity_teu_4week, offered_capacity_teu_8week
-   - Refreshed: After each ETL run
+   - Unique index: (corridor, week_start_date, week_no) - required for concurrent refresh
+   - Refreshed: After each ETL run using CONCURRENT mode (non-blocking)
 
 **Cache:**
 - Redis key: `capacity:rolling_avg:{corridor}:{n_weeks}`
@@ -196,9 +197,9 @@ Identify entities which will be used to for storage and access patterns
 
 1. Admin runs `python etl/run_etl.py` manually when new CSV data is available
 2. Extract: Read `sailing_level_raw.csv` from S3/filesystem
-3. Transform: For each row, call `VoyageDataService.add_trip()` which atomically:
+3. Transform: For each row, call `VoyageService.add_trip()` which atomically:
    - Inserts into `trips` table
    - Upserts into `voyages` table (updates if newer departure timestamp)
-4. Refresh: Execute `REFRESH MATERIALIZED VIEW weekly_capacity_rolling`
+4. Refresh: Execute `REFRESH MATERIALIZED VIEW CONCURRENTLY weekly_capacity_rolling` (non-blocking, view remains queryable)
 5. Invalidate: Clear all Redis keys matching `capacity:*` (if using cache)
 6. ETL complete (~2-5 minutes for 4k rows)

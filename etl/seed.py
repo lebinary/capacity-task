@@ -1,14 +1,17 @@
+import asyncio
 import csv
 import os
 import sys
 from datetime import datetime
-import asyncio
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import logging
+
+from sqlalchemy import text
+
 from backend_app.src.database import AsyncSessionLocal
 from backend_app.src.services.voyage_service import VoyageService
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,7 +35,7 @@ def parse_csv_row(row: dict) -> tuple[dict, dict]:
         "origin_port_code": row["ORIGIN_PORT_CODE"],
         "destination_port_code": row["DESTINATION_PORT_CODE"],
         "origin_at_utc": origin_at_utc,
-        "offered_capacity_teu": capacity_teu
+        "offered_capacity_teu": capacity_teu,
     }
 
     voyage_data = {
@@ -43,10 +46,21 @@ def parse_csv_row(row: dict) -> tuple[dict, dict]:
         "latest_origin_departure": origin_at_utc,
         "week_start_date": week_info["week_start_date"],
         "week_no": week_info["week_no"],
-        "capacity_teu": capacity_teu
+        "capacity_teu": capacity_teu,
     }
 
     return trip_data, voyage_data
+
+
+async def refresh_materialized_view(db):
+    try:
+        await db.execute(
+            text("REFRESH MATERIALIZED VIEW CONCURRENTLY weekly_capacity_rolling")
+        )
+        await db.commit()
+        logger.info("Materialized view refreshed successfully")
+    except Exception as e:
+        logger.warning(f"View refresh failed (may not exist yet): {e}")
 
 
 async def seed_database(csv_path: str):
@@ -54,7 +68,7 @@ async def seed_database(csv_path: str):
         service = VoyageService(db)
 
         try:
-            with open(csv_path, 'r', encoding='utf-8') as csvfile:
+            with open(csv_path, "r", encoding="utf-8") as csvfile:
                 reader = csv.DictReader(csvfile)
                 total_rows = 0
 
@@ -74,6 +88,9 @@ async def seed_database(csv_path: str):
 
                 logger.info(f"Seeding complete. Total rows processed: {total_rows}")
 
+                # Refresh materialized view after data load
+                await refresh_materialized_view(db)
+
         except Exception as e:
             logger.error(f"Fatal error during seeding: {e}")
             await db.rollback()
@@ -84,7 +101,7 @@ if __name__ == "__main__":
     csv_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         "raw_data",
-        "sailing_level_raw.csv"
+        "sailing_level_raw.csv",
     )
 
     if not os.path.exists(csv_path):
