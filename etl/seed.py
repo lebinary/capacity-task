@@ -7,7 +7,7 @@ import asyncio
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend_app.src.database import AsyncSessionLocal
-from backend_app.src.services.voyage_service import VoyageDataService
+from backend_app.src.services.voyage_service import VoyageService
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -24,7 +24,7 @@ def parse_csv_row(row: dict) -> tuple[dict, dict]:
     corridor = f"{row['ORIGIN']}-{row['DESTINATION']}"
     capacity_teu = int(row["OFFERED_CAPACITY_TEU"])
 
-    week_info = VoyageDataService.calculate_week_info(origin_at_utc)
+    week_info = VoyageService.calculate_week_info(origin_at_utc)
 
     trip_data = {
         "origin": row["ORIGIN"],
@@ -51,7 +51,7 @@ def parse_csv_row(row: dict) -> tuple[dict, dict]:
 
 async def seed_database(csv_path: str):
     async with AsyncSessionLocal() as db:
-        service = VoyageDataService(db)
+        service = VoyageService(db)
 
         try:
             with open(csv_path, 'r', encoding='utf-8') as csvfile:

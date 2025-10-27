@@ -2,8 +2,9 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from backend_app.src.database import Base
-from backend_app.src.services.voyage_service import VoyageDataService
+from backend_app.src.services.voyage_service import VoyageService
 from datetime import datetime
+from unittest.mock import AsyncMock
 import os
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
@@ -59,7 +60,7 @@ def make_voyage_data():
         service_master="THEA - FE3 || HL - FE3 | HMM - FE3 | ONE - FE3 | YML - FE3"
     ):
         dt = origin_at_utc or datetime(2024, 4, 18, 22, 0, 0)
-        week_info = VoyageDataService.calculate_week_info(dt)
+        week_info = VoyageService.calculate_week_info(dt)
 
         return {
             "service_version_roundtrip": service_roundtrip,
@@ -72,3 +73,11 @@ def make_voyage_data():
             "capacity_teu": capacity
         }
     return _make
+
+
+@pytest.fixture
+def mock_redis():
+    mock = AsyncMock()
+    mock.get.return_value = None
+    mock.setex.return_value = True
+    return mock

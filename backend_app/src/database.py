@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
+import redis.asyncio as redis
 import os
 import logging
 
@@ -40,6 +41,16 @@ async def get_db():
             raise
         finally:
             await db.close()
+
+
+async def get_redis() -> redis.Redis:
+    redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
+    client = redis.from_url(redis_url, decode_responses=True)
+    try:
+        await client.ping()
+        yield client
+    finally:
+        await client.close()
 
 
 async def init_db():
