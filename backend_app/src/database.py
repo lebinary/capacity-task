@@ -38,7 +38,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as db:
         try:
             yield db
-        except:
+        except Exception:
             await db.rollback()
             raise
         finally:
