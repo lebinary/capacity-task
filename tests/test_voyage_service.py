@@ -12,7 +12,7 @@ async def test_create_new_voyage_and_trip(test_db_session, make_trip_data, make_
     trip_data = make_trip_data()
     voyage_data = make_voyage_data()
 
-    trip, voyage = await service.add_trip(trip_data, voyage_data)
+    trip, voyage = await service.add_trip_and_voyage(trip_data, voyage_data)
 
     assert trip.id is not None
     assert voyage.id is not None
@@ -34,14 +34,14 @@ async def test_upsert_voyage_with_newer_departure(test_db_session, make_trip_dat
     trip1 = make_trip_data(origin_at_utc=dt1)
     voyage1 = make_voyage_data(origin_at_utc=dt1)
 
-    trip_result1, voyage_result1 = await service.add_trip(trip1, voyage1)
+    trip_result1, voyage_result1 = await service.add_trip_and_voyage(trip1, voyage1)
     voyage_id_before = voyage_result1.id
 
     dt2 = datetime(2024, 4, 25, 10, 0, 0)
     trip2 = make_trip_data(origin_at_utc=dt2, capacity=30000, dest_port="NLRTM")
     voyage2 = make_voyage_data(origin_at_utc=dt2, capacity=30000)
 
-    trip, voyage = await service.add_trip(trip2, voyage2)
+    trip, voyage = await service.add_trip_and_voyage(trip2, voyage2)
 
     assert voyage.id == voyage_id_before
     assert voyage.latest_origin_departure == dt2
@@ -62,14 +62,14 @@ async def test_upsert_voyage_with_older_departure(test_db_session, make_trip_dat
     trip1 = make_trip_data(origin_at_utc=dt1, capacity=30000)
     voyage1 = make_voyage_data(origin_at_utc=dt1, capacity=30000)
 
-    trip_result1, voyage_result1 = await service.add_trip(trip1, voyage1)
+    trip_result1, voyage_result1 = await service.add_trip_and_voyage(trip1, voyage1)
     voyage_id_before = voyage_result1.id
 
     dt2 = datetime(2024, 4, 18, 22, 0, 0)
     trip2 = make_trip_data(origin_at_utc=dt2, dest_port="NLRTM")
     voyage2 = make_voyage_data(origin_at_utc=dt2)
 
-    trip, voyage = await service.add_trip(trip2, voyage2)
+    trip, voyage = await service.add_trip_and_voyage(trip2, voyage2)
 
     assert voyage.id == voyage_id_before
     assert voyage.latest_origin_departure == dt1
@@ -96,7 +96,7 @@ async def test_different_voyages_same_service_different_masters(test_db_session,
         service_master="THEA - FE3 || HL - FE3 | HMM - FE3"
     )
 
-    await service.add_trip(trip1, voyage1)
+    await service.add_trip_and_voyage(trip1, voyage1)
 
     trip2 = make_trip_data(origin_at_utc=dt, capacity=15000)
     voyage2 = make_voyage_data(
@@ -105,7 +105,7 @@ async def test_different_voyages_same_service_different_masters(test_db_session,
         service_master="DIFFERENT - SERVICE"
     )
 
-    await service.add_trip(trip2, voyage2)
+    await service.add_trip_and_voyage(trip2, voyage2)
 
     result = await test_db_session.execute(select(VoyageModel))
     assert len(result.scalars().all()) == 2

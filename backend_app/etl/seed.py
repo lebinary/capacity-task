@@ -75,7 +75,7 @@ async def seed_database(csv_path: str) -> None:
                 for row in reader:
                     try:
                         trip_data, voyage_data = parse_csv_row(row)
-                        await service.add_trip(trip_data, voyage_data)
+                        await service.add_trip_and_voyage(trip_data, voyage_data)
                         total_rows += 1
 
                         if total_rows % 100 == 0:

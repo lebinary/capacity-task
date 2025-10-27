@@ -21,7 +21,7 @@ class VoyageService:
         self.voyage_repo = VoyageRepository(db)
         self.trip_repo = TripRepository(db)
 
-    async def add_trip(
+    async def add_trip_and_voyage(
         self, trip_data: TripSchemaCreate, voyage_data: VoyageSchemaCreate
     ) -> tuple[TripModel, VoyageModel]:
         voyage = await self.voyage_repo.find_by_composite_key(
