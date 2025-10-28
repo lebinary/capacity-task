@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #0a1628;
+  }
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  cursor: text;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  cursor: text;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  cursor: text;
+}

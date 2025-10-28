@@ -36,5 +36,6 @@ if __name__ == "__main__":
         "backend_app.src.asgi:app",
         host=host,
         port=port,
-        reload=True
+        reload=True,
+        reload_excludes=["frontend_app/*"]
     )
