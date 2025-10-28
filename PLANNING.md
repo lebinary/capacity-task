@@ -8,7 +8,6 @@
   - Extension:
     - Ability to query `n-week` rolling avergage, not just 4
     - Ability to query from any corridors, not just China - North EU
-- [Extra] Talk to your data in natural language query (AI feature)
 
 ### Non-funtional:
 
@@ -42,11 +41,6 @@ Identify entities which will be used to for storage and access patterns
   - Output: List of weeks with n-week rolling average
   - Frequency: Low
   - Latency requirement: < 200ms
-- Natural language query (AI feature)
-  - Input: "What was the capacity trend in March?"
-  - Output: Translated to structured query + results
-  - Frequency: Low
-  - Latency requirement: < 2s (includes LLM call)
 
 ### Storage:
 
@@ -82,10 +76,6 @@ Identify entities which will be used to for storage and access patterns
 - `GET /capacity` - Query capacity with rolling average for date range
    - Params: date_from, date_to, corridor (optional), n_weeks (optional)
    - Returns: List of weeks with rolling average capacity
-
-- `POST /query` - Natural language query (AI feature)
-   - Body: { "query": "..." }
-   - Returns: Parsed parameters + capacity data
 
 - `GET /health` - Health check
    - Returns: Service status, last ETL run timestamp
@@ -173,15 +163,11 @@ Identify entities which will be used to for storage and access patterns
 
 ### 6. External Services
 
-- **AI Vendor**: OpenAI API (GPT-4) or Claude API
-  - Purpose: Parse natural language queries into structured parameters
-  - Used by: POST /query endpoint
-
 - **Data Lake**: S3 (or local filesystem for development)
   - Purpose: Store raw CSV files from 3rd parties
   - Access: ETL process reads from here
 
-- **Notes**: AI vendor is optional feature, data lake can be local files for MVP
+- **Notes**: Data lake can be local files for MVP
 
 ## Data Flow
 
