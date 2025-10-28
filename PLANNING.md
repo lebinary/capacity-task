@@ -109,7 +109,7 @@ Identify entities which will be used to for storage and access patterns
 
 ## 4. Architecture Overview
 
-![System Architecture](media/architecture.jpeg)
+![System Architecture](media/architecture.png)
 
 ## Components
 
