@@ -93,10 +93,10 @@ def make_voyage_data():
 
 
 @pytest.fixture
-def mock_redis():
+def mock_cache():
     mock = AsyncMock()
-    mock.get.return_value = None
-    mock.setex.return_value = True
+    mock.get_json.return_value = None
+    mock.set_json.return_value = None
     return mock
 
 

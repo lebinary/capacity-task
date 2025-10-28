@@ -115,22 +115,22 @@ async def test_different_voyages_same_service_different_masters(test_db_session,
 
 
 @pytest.mark.asyncio
-async def test_get_rolling_average_capacity_empty_database(test_db_session, mock_redis):
+async def test_get_rolling_average_capacity_empty_database(test_db_session, mock_cache):
     service = VoyageService(test_db_session)
 
     result = await service.get_rolling_average_capacity(
         date_from=datetime(2024, 1, 1),
         date_to=datetime(2024, 3, 31),
-        redis_client=mock_redis
+        cache=mock_cache
     )
 
     assert result == []
-    mock_redis.get.assert_called_once()
-    mock_redis.setex.assert_called_once()
+    mock_cache.get_json.assert_called_once()
+    mock_cache.set_json.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_get_rolling_average_capacity_with_voyages(test_db_session, make_voyage_data, mock_redis):
+async def test_get_rolling_average_capacity_with_voyages(test_db_session, make_voyage_data, mock_cache):
     from backend_app.src.repositories.voyage_repository import VoyageRepository
 
     repo = VoyageRepository(test_db_session)
@@ -158,7 +158,7 @@ async def test_get_rolling_average_capacity_with_voyages(test_db_session, make_v
     result = await service.get_rolling_average_capacity(
         date_from=datetime(2024, 1, 1),
         date_to=datetime(2024, 1, 31),
-        redis_client=mock_redis
+        cache=mock_cache
     )
 
     assert len(result) == 2
@@ -169,7 +169,7 @@ async def test_get_rolling_average_capacity_with_voyages(test_db_session, make_v
 
 
 @pytest.mark.asyncio
-async def test_get_rolling_average_capacity_date_filtering(test_db_session, make_voyage_data, mock_redis):
+async def test_get_rolling_average_capacity_date_filtering(test_db_session, make_voyage_data, mock_cache):
     from backend_app.src.repositories.voyage_repository import VoyageRepository
 
     repo = VoyageRepository(test_db_session)
@@ -193,7 +193,7 @@ async def test_get_rolling_average_capacity_date_filtering(test_db_session, make
     result = await service.get_rolling_average_capacity(
         date_from=datetime(2024, 2, 1),
         date_to=datetime(2024, 2, 29),
-        redis_client=mock_redis
+        cache=mock_cache
     )
 
     assert all("2024-02" in r["week_start_date"] or "2024-01-29" in r["week_start_date"] for r in result)

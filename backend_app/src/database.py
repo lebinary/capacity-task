@@ -1,8 +1,6 @@
 import logging
 import os
-from typing import AsyncGenerator
 
-import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
@@ -17,43 +15,17 @@ if DATABASE_URL.startswith("postgresql://"):
 else:
     raise ValueError("Unsupported database type for async operations")
 
-async_engine = create_async_engine(
-    ASYNC_DATABASE_URL,
-    pool_pre_ping=True,
-    echo=False
-)
+async_engine = create_async_engine(ASYNC_DATABASE_URL, pool_pre_ping=True, echo=False)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=async_engine,
     autocommit=False,
     autoflush=False,
     expire_on_commit=False,
-    class_=AsyncSession
+    class_=AsyncSession,
 )
 
 Base = declarative_base()
-
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as db:
-        try:
-            yield db
-        except Exception:
-            await db.rollback()
-            raise
-        finally:
-            await db.close()
-
-
-async def get_redis() -> AsyncGenerator[redis.Redis, None]:
-    redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
-    client = redis.from_url(redis_url, decode_responses=True)
-    try:
-        await client.ping()
-        yield client
-    finally:
-        await client.close()
-
 
 async def init_db() -> None:
     async with async_engine.begin() as conn:

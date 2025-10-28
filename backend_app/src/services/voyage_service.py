@@ -1,10 +1,9 @@
-import json
 from datetime import datetime, timedelta
 from typing import Dict, List
 
-import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend_app.src.cache import CacheMemory
 from backend_app.src.models import TripModel, VoyageModel
 from backend_app.src.repositories import TripRepository, VoyageRepository
 from backend_app.src.schemas import (
@@ -53,14 +52,15 @@ class VoyageService:
         self,
         date_from: datetime,
         date_to: datetime,
-        redis_client: redis.Redis,
+        cache: CacheMemory,
         corridor: str = "china_main-north_europe_main",
         n_weeks: int = 4,
     ) -> List[Dict]:
         cache_key = f"capacity:{corridor}:{date_from.date()}:{date_to.date()}:{n_weeks}"
-        cached = await redis_client.get(cache_key)
+
+        cached = await cache.get_json(cache_key)
         if cached:
-            return json.loads(cached)
+            return cached
 
         rows = await self.voyage_repo.get_rolling_average_capacity(
             date_from=date_from, date_to=date_to, corridor=corridor, n_weeks=n_weeks
@@ -75,11 +75,7 @@ class VoyageService:
             for row in rows
         ]
 
-        await redis_client.setex(
-            cache_key,
-            3600,
-            json.dumps(data),
-        )
+        await cache.set_json(cache_key, data, ttl=3600)
 
         return data
 
