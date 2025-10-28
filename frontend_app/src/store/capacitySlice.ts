@@ -17,10 +17,10 @@ const initialState: CapacityState = {
 
 export const fetchCapacity = createAsyncThunk(
   'capacity/fetch',
-  async ({ dateFrom, dateTo }: { dateFrom: string; dateTo: string }) => {
+  async ({ dateFrom, dateTo, nWeeks }: { dateFrom: string; dateTo: string; nWeeks: number }) => {
     const apiUrl = getApiUrl();
     const response = await axios.get<CapacityData[]>(`${apiUrl}/capacity`, {
-      params: { date_from: dateFrom, date_to: dateTo },
+      params: { date_from: dateFrom, date_to: dateTo, n_weeks: nWeeks },
     });
     return response.data;
   }

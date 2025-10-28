@@ -9,12 +9,13 @@ import { DATE_RANGE } from './constants';
 function App() {
   const [dateFrom, setDateFrom] = useState(DATE_RANGE.MIN);
   const [dateTo, setDateTo] = useState(DATE_RANGE.MAX);
+  const [nWeeks, setNWeeks] = useState(4);
   const dispatch = useDispatch<AppDispatch>();
   const { data, loading, error } = useSelector((state: RootState) => state.capacity);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(fetchCapacity({ dateFrom, dateTo }));
+    dispatch(fetchCapacity({ dateFrom, dateTo, nWeeks }));
   };
 
   return (
@@ -26,8 +27,10 @@ function App() {
         <DateRangePicker
           dateFrom={dateFrom}
           dateTo={dateTo}
+          nWeeks={nWeeks}
           onDateFromChange={setDateFrom}
           onDateToChange={setDateTo}
+          onNWeeksChange={setNWeeks}
           onSubmit={handleSubmit}
           loading={loading}
         />

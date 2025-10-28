@@ -3,8 +3,10 @@ import { DATE_RANGE } from '../constants';
 interface DateRangePickerProps {
   dateFrom: string;
   dateTo: string;
+  nWeeks: number;
   onDateFromChange: (date: string) => void;
   onDateToChange: (date: string) => void;
+  onNWeeksChange: (nWeeks: number) => void;
   onSubmit: (e: React.FormEvent) => void;
   loading: boolean;
 }
@@ -12,8 +14,10 @@ interface DateRangePickerProps {
 export const DateRangePicker = ({
   dateFrom,
   dateTo,
+  nWeeks,
   onDateFromChange,
   onDateToChange,
+  onNWeeksChange,
   onSubmit,
   loading,
 }: DateRangePickerProps) => {
@@ -47,6 +51,21 @@ export const DateRangePicker = ({
             max={DATE_RANGE.MAX}
             required
             className="w-full px-4 py-2 bg-primary border border-border text-text-primary rounded-md focus:ring-2 focus:ring-secondary focus:border-secondary [color-scheme:dark]"
+          />
+        </div>
+
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-text-secondary mb-2">
+            N-Week:
+          </label>
+          <input
+            type="number"
+            value={nWeeks}
+            onChange={(e) => onNWeeksChange(Number(e.target.value))}
+            min={1}
+            max={8}
+            required
+            className="w-full px-4 py-2 bg-primary border border-border text-text-primary rounded-md focus:ring-2 focus:ring-secondary focus:border-secondary"
           />
         </div>
 
