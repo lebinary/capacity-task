@@ -1,5 +1,7 @@
 # Capacity Task
 
+**Time to Complete: ~15 hours**
+
 ## Prerequisites
 
 Before starting, verify you have:
