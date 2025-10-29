@@ -1,38 +1,64 @@
 # Capacity Task
 
-## Requirements
+## Prerequisites
+
+Before starting, verify you have:
 
 - **Node.js**: 20.19+ or 22.12+
 - **Docker**: Latest version
 - **Docker Compose**: Latest version
 
-## Setup
+Check versions:
+```bash
+node --version
+docker --version
+docker-compose --version
+```
 
-1. Create environment file:
+## First-Time Setup
+
+### Step 1: Create Environment File
+
 ```bash
 cp .env.example .env
 ```
 
-## Quick Start
+The `.env` file contains configuration for:
+- PostgreSQL (port 5433)
+- Redis (port 6380)
+- Backend API (port 8001)
+- Frontend (port 3001)
 
-**IMPORTANT: Requires 2 terminals**
+### Step 2: Start Backend (Terminal 1)
 
-### Terminal 1 - Backend:
 ```bash
 ./scripts/run_backend_app.sh
 ```
 
-First run automatically builds, migrates, and seeds. Takes up to 10 minutes.
+**First run will automatically:**
+1. Build Docker images (backend, postgres, redis)
+2. Wait for database health check
+3. Run `alembic upgrade head` to create database tables
+4. Run `python backend_app/etl/seed.py` to load CSV data into database
 
-Backend API: Configured via API_URL and API_PORT in .env
-Health check: {API_URL}:{API_PORT}/health
+**This takes ~10 minutes on first run.**
 
-### Terminal 2 - Frontend:
+Backend API: http://localhost:8001
+Health check: http://localhost:8001/health
+
+### Step 3: Start Frontend (Terminal 2)
+
+**IMPORTANT: Open a new terminal window**
+
 ```bash
 ./scripts/run_frontend_app.sh
 ```
 
-Frontend: Configured via API_URL and FRONTEND_PORT in .env
+First run will automatically:
+1. Install npm dependencies if `node_modules` doesn't exist
+2. Start Vite dev server
+
+Frontend: http://localhost:3001
 
 ## Services
 
@@ -49,9 +75,30 @@ Frontend: Configured via API_URL and FRONTEND_PORT in .env
 
 ## Common Commands
 
+### Rebuild Backend
 ```bash
 ./scripts/run_backend_app.sh --build
+```
+
+### View Logs
+```bash
 docker-compose logs -f backend
-docker-compose exec backend alembic revision --autogenerate -m "msg"
-docker-compose down -v
+```
+
+### Create Database Migration
+```bash
+docker-compose exec backend alembic revision --autogenerate -m "description"
+```
+
+### Stop Services
+```bash
+docker-compose down
+```
+
+### Clean Start (removes all data)
+```bash
+docker-compose down -v                # Remove containers and volumes
+docker rmi capacity_backend           # Remove backend image
+rm -rf frontend_app/node_modules      # Remove node modules
+# Then run setup steps again
 ```
