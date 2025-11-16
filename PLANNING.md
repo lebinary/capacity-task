@@ -12,7 +12,7 @@
 ### Non-funtional:
 
 - Relax consistency, eventual consistency is good enough for this use case, since the read/write ratio is expected to be >> 1 (much larger than 1).
-  => Build AP System (Availability and Partition Tolerance)
+  => Build CP System (Consistency and Partition Tolerance)
 
 ## 2. Access Patterns & Storage:
 
